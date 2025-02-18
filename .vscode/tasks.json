@@ -16,7 +16,9 @@
             "type": "cmake",
             "label": "CMake",
             "preset": "build",
-            "targets": ["${workspaceFolder}/build"],
+            "targets": [
+                "${workspaceFolder}/build"
+            ],
             "group": "build",
             "problemMatcher": []
         },

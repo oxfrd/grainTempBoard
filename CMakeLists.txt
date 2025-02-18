@@ -3,12 +3,20 @@ cmake_minimum_required(VERSION 3.25)
 add_library(MCU_IMPLEMENTATION
         mcuInit.cpp
 )
-add_subdirectory(HAL)
-add_subdirectory(gpio)
-add_subdirectory(timer)
-add_subdirectory(interrupt)
-add_subdirectory(uart)
-add_subdirectory(i2c)
+
+set(MANUFACTURER ST)
+set(MCU_MODEL STM32L476)
+
+set(HAL_DIR_PATH ${CMAKE_SOURCE_DIR}/HAL CACHE PATH "Hal path")
+set(MCU_PATH ${CMAKE_SOURCE_DIR}/HAL/core/${MANUFACTURER}/${MCU_MODEL}/halLayerImpl)
+
+add_subdirectory(${HAL_DIR_PATH}/lib)
+add_subdirectory(${CMAKE_SOURCE_DIR}/HAL/core)
+add_subdirectory(${MCU_PATH}/gpio)
+add_subdirectory(${MCU_PATH}/timer)
+add_subdirectory(${MCU_PATH}/interrupt)
+add_subdirectory(${MCU_PATH}/uart)
+add_subdirectory(${MCU_PATH}/i2c)
 
 target_link_libraries(MCU_IMPLEMENTATION PUBLIC 
                         HAL_MCU_LAYER
@@ -23,10 +31,10 @@ target_link_libraries(MCU_IMPLEMENTATION PUBLIC
                         )
 
 target_include_directories(MCU_IMPLEMENTATION 
-        PRIVATE ${CMAKE_SOURCE_DIR}/core/ST/${MCU_MODEL}/Include
-        PUBLIC  ${CMAKE_SOURCE_DIR}/core/ST/${MCU_MODEL}/halLayer/gpio
-        PRIVATE  ${CMAKE_SOURCE_DIR}/core/ST/${MCU_MODEL}/halLayer/timer
-        PUBLIC  ${CMAKE_SOURCE_DIR}/core/ST/${MCU_MODEL}/halLayer/interrupt
-        PUBLIC  ${CMAKE_SOURCE_DIR}/core/ST/${MCU_MODEL}/halLayer/uart
-        PUBLIC  ${CMAKE_SOURCE_DIR}/core/ST/${MCU_MODEL}/halLayer/i2c
+        PUBLIC  ${MCU_PATH}/../Include
+        PUBLIC  ${MCU_PATH}/gpio
+        PRIVATE ${MCU_PATH}/timer
+        PUBLIC  ${MCU_PATH}/interrupt
+        PUBLIC  ${MCU_PATH}/uart
+        PUBLIC  ${MCU_PATH}/i2c
         )

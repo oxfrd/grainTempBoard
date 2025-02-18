@@ -11,7 +11,7 @@
             "executable": "${workspaceFolder}/build/HAL_MCU.elf",
             "name": "Debug_HAL",
             "device": "STM32L476",
-            "svdFile": "${workspaceFolder}/core/ST/STM32L476/Startup/stm32l4x6.svd",
+            "svdFile": "${workspaceFolder}/HAL/core/ST/STM32L476/Startup/stm32l4x6.svd",
             "openOCDLaunchCommands": ["init", "reset init"],
             "configFiles": [
                 "interface/stlink.cfg", "target/stm32l4x.cfg"
