@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "showDevDebugOutput": "vscode",
+            "request": "launch",
+            "servertype": "openocd",
+            "serverpath": "/usr/bin/openocd",
+            "cwd": "${workspaceFolder}/",
+            "executable": "${workspaceFolder}/build/HAL_MCU.elf",
+            "name": "Debug_HAL",
+            "device": "STM32L476",
+            "svdFile": "${workspaceFolder}/core/ST/STM32L476/Startup/stm32l4x6.svd",
+            "openOCDLaunchCommands": ["init", "reset init"],
+            "configFiles": [
+                "interface/stlink.cfg", "target/stm32l4x.cfg"
+            ],
+            "preRestartCommands": [
+                "target remote localhost:3333",
+                "add-symbol-file ${workspaceFolderBasename}",
+                "enable breakpoint",
+                "monitor reset"],
+             "liveWatch": {
+                 "enabled": true,
+                 "samplesPerSecond": 1
+             },
+            "stlinkPath": "/usr/bin",
+            "runToEntryPoint": "true",
+            "showDevDebugTimestamps": false
+        },
+    ]
+}
