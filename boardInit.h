@@ -7,7 +7,7 @@
 
 namespace mcu
 {
-    enum class eMcuResources 
+    enum class eResourcesList 
     {
         ePortB,
         ePortE,
