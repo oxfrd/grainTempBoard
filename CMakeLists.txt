@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 3.25)
 
 add_library(BOARD_IMPLEMENTATION
         boardInit.cpp
+        delay.cpp
 )
 
-set(MANUFACTURER ST)
-set(MCU_MODEL STM32L476)
+set(MANUFACTURER ST CACHE PATH "MANUFACTURER")
+set(MCU_MODEL STM32L476 CACHE PATH "MCU_MODEL")
 
-set(HAL_DIR_PATH ${CMAKE_SOURCE_DIR}/HAL CACHE PATH "Hal path")
-set(MCU_PATH ${CMAKE_SOURCE_DIR}/HAL/core/${MANUFACTURER}/${MCU_MODEL}/halLayerImpl)
+set(HAL_DIR_PATH ${CMAKE_SOURCE_DIR}/grainTempBoard/HAL CACHE PATH "Hal path")
+set(MCU_PATH ${CMAKE_SOURCE_DIR}/grainTempBoard/HAL/core/${MANUFACTURER}/${MCU_MODEL}/halLayerImpl)
 
 
 include(${HAL_DIR_PATH}/core/${MANUFACTURER}/${MCU_MODEL}/cfg.cmake)
@@ -37,7 +38,7 @@ target_link_libraries(BOARD_IMPLEMENTATION PUBLIC
                         MODULES_IMPL
                         )
 
-target_include_directories(BOARD_IMPLEMENTATION 
+target_include_directories(BOARD_IMPLEMENTATION
         PUBLIC  ${MCU_PATH}/../Include
         PUBLIC  ${MCU_PATH}/gpio
         PRIVATE ${MCU_PATH}/timer

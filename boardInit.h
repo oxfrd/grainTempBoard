@@ -5,7 +5,7 @@
 
 #define HSE_VALUE 32768000
 
-namespace mcu
+namespace board
 {
     enum class eResourcesList 
     {
@@ -34,4 +34,4 @@ namespace mcu
     };
 
     std::shared_ptr<hal::mcu::mcuManager> init();
-}   //mcu
+}   //board
