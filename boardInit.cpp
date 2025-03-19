@@ -18,6 +18,7 @@
 #include "interrupt.h"
 #include "i2c.h"
 #include "BMP280.h"
+#include "gpioOutAndInput.h"
 
 void checkErr(eError err)
 {
@@ -265,6 +266,13 @@ std::shared_ptr<hal::mcu::mcuManager> init()
          auto bmp = std::make_shared<module::BMP280>(I2C1Handle);
          err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eBMP280), std::move(bmp));
          checkErr(err);
+    }
+
+    {
+        auto gpio = std::make_shared<mcu::gpio::gpioOutAndInput>(0, portD, hal::gpio::eMode::eInput, 
+            hal::gpio::eTermination::ePullDown);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eGPIO_D0), std::move(gpio));
+        checkErr(err);
     }
 
     return std::move(mcu);
