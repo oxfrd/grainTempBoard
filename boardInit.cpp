@@ -19,6 +19,7 @@
 #include "i2c.h"
 #include "BMP280.h"
 #include "gpioOutAndInput.h"
+#include "delay.h"
 
 void checkErr(eError err)
 {
@@ -272,6 +273,21 @@ std::shared_ptr<hal::mcu::mcuManager> init()
         auto gpio = std::make_shared<mcu::gpio::gpioOutAndInput>(0, portD, hal::gpio::eMode::eInput, 
             hal::gpio::eTermination::ePullDown);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eGPIO_D0), std::move(gpio));
+        checkErr(err);
+    }
+
+    std::shared_ptr<hal::interrupt::ITimeInterrupt> tim2interrupt{nullptr};
+    {
+        auto timGetter = tim2interrupt->getPtr(static_cast<uint16_t>(eResourcesList::eIntTim2), mcu);
+        if (timGetter.second == eError::eOk)
+        {
+            tim2interrupt = timGetter.first;
+        }
+    }
+
+    {
+        auto delay = std::make_shared<mcu::delay::delay>(tim2interrupt);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDelay), std::move(delay));
         checkErr(err);
     }
 

@@ -31,7 +31,8 @@ namespace board
         eI2c1,
         eBMP280,
         eInterruptI2C1Event,
-        eGPIO_D0
+        eGPIO_D0,
+        eDelay,
     };
 
     std::shared_ptr<hal::mcu::mcuManager> init();

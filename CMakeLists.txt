@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.25)
 
 add_library(BOARD_IMPLEMENTATION
         boardInit.cpp
-        delay.cpp
 )
 
 set(MANUFACTURER ST CACHE PATH "MANUFACTURER")
