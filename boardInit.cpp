@@ -146,7 +146,6 @@ std::shared_ptr<hal::mcu::mcuManager> init()
 
     {
         auto interrupt = std::make_shared<mcu::interrupt::timeInterrupt>(TIM2_IRQn, tim2);
-        interrupt->enable();
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eIntTim2), std::move(interrupt));
         checkErr(err);
     }
