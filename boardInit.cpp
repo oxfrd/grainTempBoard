@@ -33,10 +33,27 @@ void checkErr(eError err)
     }
 }
 
+static void SystemClock_Config(void) {
+    // Włącz HSI
+    RCC->CR |= RCC_CR_HSION;
+    while ((RCC->CR & RCC_CR_HSIRDY) == 0); // Czekaj na gotowość HSI
+
+    // Ustaw latency Flash na 1 cykl oczekiwania (dla 16 MHz przy VOS Scale 2)
+    FLASH->ACR &= ~FLASH_ACR_LATENCY;
+    FLASH->ACR |= FLASH_ACR_LATENCY_1WS;
+
+    // Przełącz system na HSI
+    RCC->CFGR &= ~RCC_CFGR_SW;
+    RCC->CFGR |= RCC_CFGR_SW_HSI;
+    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI); // Czekaj na przełączenie
+}
+
 namespace board
 {
 std::shared_ptr<hal::mcu::mcuManager> init()
 {
+    SystemClock_Config();
+    
     auto mcu = std::make_shared<hal::mcu::mcuManager>(hal::mcu::mcuManager());
     if (mcu == nullptr)
     {
@@ -94,7 +111,7 @@ std::shared_ptr<hal::mcu::mcuManager> init()
     }
 
     {
-        auto gpio = std::make_shared<mcu::gpio::gpioOutput>(2, portB, hal::gpio::eTermination::ePullUp, false);
+        auto gpio = std::make_shared<mcu::gpio::gpioOutput>(2, portB, hal::gpio::eTermination::ePullUp, false, hal::gpio::eSpeed::eVeryHigh);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eGPIO_B2), std::move(gpio));
         checkErr(err);
     }
