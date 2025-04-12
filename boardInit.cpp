@@ -20,6 +20,8 @@
 #include "BMP280.h"
 #include "gpioOutAndInput.h"
 #include "delay.h"
+#include "IOneWire.h"
+#include "oneWire.h"
 
 void checkErr(eError err)
 {
@@ -304,6 +306,47 @@ std::shared_ptr<hal::mcu::mcuManager> init()
     {
         auto delay = std::make_shared<mcu::delay::delay>(tim2interrupt);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDelay), std::move(delay));
+        checkErr(err);
+    }
+
+    std::shared_ptr<hal::delay::IDelay> delay{nullptr};
+    {
+        auto getter = delay->getPtr(static_cast<uint16_t>(eResourcesList::eDelay),mcu);
+        if (getter.second == eError::eOk)
+        {
+            delay = getter.first;
+        } else { checkErr(getter.second);}
+    }
+
+    auto portC = std::make_shared<mcu::gpio::gpioPort>(mcu::gpio::gpioPort(2));
+    err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::ePortC),std::move(portC));
+    checkErr(err);
+    {
+        auto getter = portC->getPtr(static_cast<uint16_t>(eResourcesList::ePortC),mcu);
+        if (getter.second == eError::eOk)
+        {
+            portC = std::dynamic_pointer_cast<mcu::gpio::gpioPort>(getter.first);
+        }
+    }
+
+    {
+        auto pin = std::make_shared<mcu::gpio::gpioOutAndInput>(14, portC);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eGPIO_C14), std::move(pin));
+        checkErr(err);
+    }
+
+    std::shared_ptr<mcu::gpio::gpioOutAndInput> oneWire1Pin{nullptr};
+    {
+        auto getter = oneWire1Pin->getPtr(static_cast<uint16_t>(eResourcesList::eGPIO_C14),mcu);
+        if (getter.second == eError::eOk)
+        {
+            oneWire1Pin = std::dynamic_pointer_cast<mcu::gpio::gpioOutAndInput>(getter.first);
+        } else { checkErr(getter.second);}
+    }
+
+    {
+        auto oneWire = std::make_shared<mcu::oneWire::oneWire>(oneWire1Pin, delay);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eOneWire1), std::move(oneWire));
         checkErr(err);
     }
 

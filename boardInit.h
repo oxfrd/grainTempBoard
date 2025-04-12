@@ -33,6 +33,9 @@ namespace board
         eInterruptI2C1Event,
         eGPIO_D0,
         eDelay,
+        ePortC,
+        eGPIO_C14,
+        eOneWire1,
     };
 
     std::shared_ptr<hal::mcu::mcuManager> init();

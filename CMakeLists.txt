@@ -23,6 +23,7 @@ add_subdirectory(${MCU_PATH}/timer)
 add_subdirectory(${MCU_PATH}/interrupt)
 add_subdirectory(${MCU_PATH}/uart)
 add_subdirectory(${MCU_PATH}/i2c)
+add_subdirectory(${MCU_PATH}/oneWire)
 
 target_link_libraries(BOARD_IMPLEMENTATION PUBLIC 
                         HAL_MCU_LAYER
@@ -34,7 +35,7 @@ target_link_libraries(BOARD_IMPLEMENTATION PUBLIC
                         INTERRUPT_IMPLEMENTATION
                         UART_IMPLEMENTATION
                         I2C_IMPLEMENTATION
-                        MODULES_IMPL
+                        ONEWIRE_IMPLEMENTATION
                         )
 
 target_include_directories(BOARD_IMPLEMENTATION
