@@ -36,6 +36,7 @@ namespace board
         ePortC,
         eGPIO_C14,
         eOneWire1,
+        eDS18B20_1,
     };
 
     std::shared_ptr<hal::mcu::mcuManager> init();

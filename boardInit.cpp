@@ -6,6 +6,7 @@
 #include "ITimer.h"
 #include "IGpio.h"
 #include "IUart.h"
+#include "IOneWire.h"
 
 #include "boardInit.h"
 #include "gpioPort.h"
@@ -20,8 +21,9 @@
 #include "BMP280.h"
 #include "gpioOutAndInput.h"
 #include "delay.h"
-#include "IOneWire.h"
 #include "oneWire.h"
+#include "DS18B20.h"
+#include "blockingTimer.h"
 
 void checkErr(eError err)
 {
@@ -35,21 +37,42 @@ void checkErr(eError err)
     }
 }
 
-static void SystemClock_Config(void) {
+void SystemClock_Config(void) {
     // Włącz HSI
     RCC->CR |= RCC_CR_HSION;
-    while ((RCC->CR & RCC_CR_HSIRDY) == 0); // Czekaj na gotowość HSI
+    while ((RCC->CR & RCC_CR_HSIRDY) == 0);
 
-    // Ustaw latency Flash na 1 cykl oczekiwania (dla 16 MHz przy VOS Scale 2)
+    // Ustaw napięcie regulatora na Scale 1 (VOS = 0b11)
+    PWR->CR1 &= ~(PWR_CR1_VOS);
+    PWR->CR1 |= PWR_CR1_VOS;
+    while (PWR->SR2 & PWR_SR2_VOSF);
+
+    // Wyłącz PLL
+    RCC->CR &= ~RCC_CR_PLLON;
+    while (RCC->CR & RCC_CR_PLLRDY);
+
+    // Konfiguruj PLL: HSI/1 * 10 / 2 = 80 MHz
+    RCC->PLLCFGR = 0; // wyczyść rejestr
+    RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSI;
+    RCC->PLLCFGR |= (0 << RCC_PLLCFGR_PLLM_Pos); // PLLM = 1
+    RCC->PLLCFGR |= (10 << RCC_PLLCFGR_PLLN_Pos); // PLLN = 10
+    RCC->PLLCFGR |= (0 << RCC_PLLCFGR_PLLR_Pos); // PLLR = 2
+    RCC->PLLCFGR |= RCC_PLLCFGR_PLLREN; // włącz PLLR (system clock)
+
+    // Włącz PLL
+    RCC->CR |= RCC_CR_PLLON;
+    while ((RCC->CR & RCC_CR_PLLRDY) == 0);
+
+    // Ustaw Flash latency na 4 WS
     FLASH->ACR &= ~FLASH_ACR_LATENCY;
-    FLASH->ACR |= FLASH_ACR_LATENCY_1WS;
+    FLASH->ACR |= FLASH_ACR_LATENCY_4WS;
 
-    // Przełącz system na HSI
+    // Przełącz system clock na PLL
     RCC->CFGR &= ~RCC_CFGR_SW;
-    RCC->CFGR |= RCC_CFGR_SW_HSI;
-    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI); // Czekaj na przełączenie
+    RCC->CFGR |= RCC_CFGR_SW_PLL;
+    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+    SystemCoreClockUpdate();
 }
-
 namespace board
 {
 std::shared_ptr<hal::mcu::mcuManager> init()
@@ -148,25 +171,19 @@ std::shared_ptr<hal::mcu::mcuManager> init()
         checkErr(err);
     }
 
-    // hal::timer::period_t timing(5.0);
-    auto timer = std::make_shared<mcu::timer::countingTimer>(TIM2);//, timing);
-    err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eTimer2), std::move(timer));
-    checkErr(err);
-
-
-    std::shared_ptr<mcu::timer::countingTimer> tim2{nullptr};
     {
-        auto timGetter = tim2->getPtr(static_cast<uint16_t>(eResourcesList::eTimer2), mcu);
-        if (timGetter.second == eError::eOk)
-        {
-            tim2 = std::dynamic_pointer_cast<mcu::timer::countingTimer>(timGetter.first);
-        }
+        auto timer = std::make_shared<mcu::blockingTimer::blockingTimer>(TIM2, SystemCoreClock);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eTimer2), std::move(timer));
+        checkErr(err);
     }
 
+    std::shared_ptr<mcu::blockingTimer::blockingTimer> blockingTimer{nullptr};
     {
-        auto interrupt = std::make_shared<mcu::interrupt::timeInterrupt>(TIM2_IRQn, tim2);
-        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eIntTim2), std::move(interrupt));
-        checkErr(err);
+        auto timGetter = blockingTimer->getPtr(static_cast<uint16_t>(eResourcesList::eTimer2), mcu);
+        if (timGetter.second == eError::eOk)
+        {
+            blockingTimer = std::dynamic_pointer_cast<mcu::blockingTimer::blockingTimer>(timGetter.first);
+        }
     }
 
     {
@@ -289,23 +306,14 @@ std::shared_ptr<hal::mcu::mcuManager> init()
 
     {
         auto gpio = std::make_shared<mcu::gpio::gpioOutAndInput>(0, portD, hal::gpio::eMode::eInput, 
-            hal::gpio::eTermination::ePullDown);
+            hal::gpio::eTermination::eFloating);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eGPIO_D0), std::move(gpio));
         checkErr(err);
     }
 
-    std::shared_ptr<hal::interrupt::ITimeInterrupt> tim2interrupt{nullptr};
     {
-        auto timGetter = tim2interrupt->getPtr(static_cast<uint16_t>(eResourcesList::eIntTim2), mcu);
-        if (timGetter.second == eError::eOk)
-        {
-            tim2interrupt = timGetter.first;
-        }
-    }
-
-    {
-        auto delay = std::make_shared<mcu::delay::delay>(tim2interrupt);
-        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDelay), std::move(delay));
+        auto obj = std::make_shared<mcu::delay::delay>(blockingTimer);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDelay), std::move(obj));
         checkErr(err);
     }
 
@@ -344,9 +352,33 @@ std::shared_ptr<hal::mcu::mcuManager> init()
         } else { checkErr(getter.second);}
     }
 
+    std::shared_ptr<hal::gpio::IGpioOutAndInput> D0{nullptr};
     {
-        auto oneWire = std::make_shared<mcu::oneWire::oneWire>(oneWire1Pin, delay);
+        auto getter = D0->getPtr(static_cast<uint16_t>(board::eResourcesList::eGPIO_D0), mcu);
+        if (getter.second == eError::eOk)
+        {
+            D0 = getter.first;
+        } else { checkErr(getter.second);}
+    }
+
+    {
+        auto oneWire = std::make_shared<mcu::oneWire::oneWire>(D0, delay);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eOneWire1), std::move(oneWire));
+        checkErr(err);
+    }
+
+    std::shared_ptr<mcu::oneWire::oneWire> oneWire1{nullptr};
+    {
+        auto getter = oneWire1->getPtr(static_cast<uint16_t>(eResourcesList::eOneWire1),mcu);
+        if (getter.second == eError::eOk)
+        {
+            oneWire1 = std::dynamic_pointer_cast<mcu::oneWire::oneWire>(getter.first);
+        } else { checkErr(getter.second);}
+    }
+
+    {
+        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_1), std::move(DS18B20));
         checkErr(err);
     }
 
