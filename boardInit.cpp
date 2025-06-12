@@ -377,7 +377,7 @@ std::shared_ptr<hal::mcu::mcuManager> init()
     }
 
     {
-        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1);
+        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_1), std::move(DS18B20));
         checkErr(err);
     }
