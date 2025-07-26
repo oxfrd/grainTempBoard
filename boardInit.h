@@ -37,6 +37,8 @@ namespace board
         eGPIO_C14,
         eOneWire1,
         eDS18B20_1,
+        eUART1,
+        eIntUART1,
     };
 
     std::shared_ptr<hal::mcu::mcuManager> init();
