@@ -283,26 +283,26 @@ std::shared_ptr<hal::mcu::mcuManager> init()
         } else { checkErr(getter.second);}
     }
 
-    {
-        auto i2c1 = std::make_shared<mcu::i2c::I2c>(I2C1, B6, B7, i2cEventInt);
-        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eI2c1), std::move(i2c1));
-        checkErr(err);
-    }
+    // {
+    //     auto i2c1 = std::make_shared<mcu::i2c::I2c>(I2C1, B6, B7, i2cEventInt);
+    //     err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eI2c1), std::move(i2c1));
+    //     checkErr(err);
+    // }
 
-    std::shared_ptr<hal::i2c::II2c> I2C1Handle{nullptr};
-    {
-        auto getter = I2C1Handle->getPtr(static_cast<uint16_t>(eResourcesList::eI2c1),mcu);
-        if (getter.second == eError::eOk)
-        {
-            I2C1Handle = std::dynamic_pointer_cast<hal::i2c::II2c>(getter.first);
-        } else { checkErr(getter.second);}
-    }
+    // std::shared_ptr<hal::i2c::II2c> I2C1Handle{nullptr};
+    // {
+    //     auto getter = I2C1Handle->getPtr(static_cast<uint16_t>(eResourcesList::eI2c1),mcu);
+    //     if (getter.second == eError::eOk)
+    //     {
+    //         I2C1Handle = std::dynamic_pointer_cast<hal::i2c::II2c>(getter.first);
+    //     } else { checkErr(getter.second);}
+    // }
 
-    {
-         auto bmp = std::make_shared<module::BMP280>(I2C1Handle);
-         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eBMP280), std::move(bmp));
-         checkErr(err);
-    }
+    // {
+    //      auto bmp = std::make_shared<module::BMP280>(I2C1Handle);
+    //      err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eBMP280), std::move(bmp));
+    //      checkErr(err);
+    // }
 
     {
         auto gpio = std::make_shared<mcu::gpio::gpioOutAndInput>(0, portD, hal::gpio::eMode::eInput, 
@@ -379,6 +379,27 @@ std::shared_ptr<hal::mcu::mcuManager> init()
     {
         auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_1), std::move(DS18B20));
+        checkErr(err);
+    }
+
+    {
+        auto interrupt = std::make_shared<mcu::interrupt::interrupt>(USART1_IRQn);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eIntUART1), std::move(interrupt));
+        checkErr(err);
+    }
+
+    std::shared_ptr<mcu::interrupt::interrupt> uart1int{nullptr};
+    {
+        auto getter = uart1int->getPtr(static_cast<uint16_t>(eResourcesList::eIntUART1),mcu);
+        if (getter.second == eError::eOk)
+        {
+            uart1int = std::dynamic_pointer_cast<mcu::interrupt::interrupt>(getter.first);
+        } else { checkErr(getter.second);}
+    }
+
+    {
+        auto uart1 = std::make_shared<mcu::uart::uart>(USART1, B6, B7, uart1int, hal::uart::eBaudrate::e9600);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eUART1), std::move(uart1));
         checkErr(err);
     }
 
