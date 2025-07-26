@@ -24,6 +24,7 @@
 #include "oneWire.h"
 #include "DS18B20.h"
 #include "blockingTimer.h"
+#include "24Cxx.h"
 
 void checkErr(eError err)
 {
@@ -379,6 +380,12 @@ std::shared_ptr<hal::mcu::mcuManager> init()
     {
         auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_1), std::move(DS18B20));
+        checkErr(err);
+    }
+
+    {
+        auto eeprom = std::make_shared<e24Cxx::e24Cxx>(I2C1Handle);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eEeeprom1), std::move(eeprom));
         checkErr(err);
     }
 
