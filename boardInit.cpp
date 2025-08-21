@@ -376,9 +376,32 @@ std::shared_ptr<hal::mcu::mcuManager> init()
         } else { checkErr(getter.second);}
     }
 
+    uint8_t testSensorAddress[8] = {0x28, 0xda, 0x20, 0xbd, 0x00, 0x00, 0x00, 0x00};
+    uint8_t lowestSensorAddress[8] = {0x28, 0xe8, 0x3b, 0xbd, 0x00, 0x00, 0x00, 0x00};
+    uint8_t middleSensorAddress[8] = {0x28, 0xb9, 0xf5, 0xbf, 0x00, 0x00, 0x00, 0x00};
+    uint8_t highestSensorAddress[8] = {0x28, 0xbc, 0xe6, 0xbf, 0x00, 0x00, 0x00, 0x00};
+
     {
-        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay);
+        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay, testSensorAddress);
         err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_1), std::move(DS18B20));
+        checkErr(err);
+    }
+
+    {
+        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay, lowestSensorAddress);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_2), std::move(DS18B20));
+        checkErr(err);
+    }
+
+    {
+        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay, middleSensorAddress);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_3), std::move(DS18B20));
+        checkErr(err);
+    }
+
+    {
+        auto DS18B20 = std::make_shared<module::DS18B20>(oneWire1, delay, highestSensorAddress);
+        err = mcu->reserveResource(static_cast<std::uint16_t>(eResourcesList::eDS18B20_4), std::move(DS18B20));
         checkErr(err);
     }
 
