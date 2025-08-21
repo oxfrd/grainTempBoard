@@ -39,6 +39,9 @@ namespace board
         eDS18B20_1,
         eUART1,
         eIntUART1,
+        eDS18B20_2,
+        eDS18B20_3,
+        eDS18B20_4,
     };
 
     std::shared_ptr<hal::mcu::mcuManager> init();
